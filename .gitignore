@@ -1,0 +1,8 @@
+.direnv/
+.envrc
+.nixpkgs-version.json
+user-password.py
+user-config.py
+apicache-py3/
+throttle.ctrl
+pywikibot.lwp
