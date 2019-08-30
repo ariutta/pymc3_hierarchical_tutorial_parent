@@ -11,7 +11,8 @@ let self = _self // overrides; _self = with self; {
 
   # Helper functions for packages that use Module::Build to build.
   pgFormatter = buildPerlPackage rec {
-    name = "pgFormatter-${version}";
+    #name = "pgFormatter-${version}";
+    pname = "pgFormatter";
     version = "v3.0";
 
     src = fetchFromGitHub {

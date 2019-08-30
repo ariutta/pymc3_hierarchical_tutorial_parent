@@ -23,10 +23,14 @@ exe 'set rtp+=' . expand("CUSTOM_PATH_REPLACE_ME")
 " it avoids conflicts it by essentially namespacing it under vim:
 "let $PATH = "CUSTOM_PATH_REPLACE_ME" . ':' . $PATH
 
+" this makes pyls and its plugins work:
+let $PATH = $PATH . ':' . "CUSTOM_PATH_REPLACE_ME"
+
 " Powerline:
 " add bindings to Vim's runtimepath:
 " default.nix handles replacing POWER_LINE_VIM_PATH_REPLACE_ME
 exe 'set rtp+=' . expand("POWER_LINE_VIM_PATH_REPLACE_ME")
+
 " make status bar always show:
 set laststatus=2
 
@@ -96,6 +100,9 @@ let g:neoformat_enabled_xml = ['tidy']
 "let g:neoformat_enabled_sql = ['pg_format']
 " And add *.sql to the list of file extensions for Neoformat
 
+autocmd Filetype * setlocal tabstop=2 softtabstop=0 expandtab shiftwidth=2 smarttab
+autocmd Filetype python setlocal tabstop=4 softtabstop=0 expandtab shiftwidth=4 smarttab
+
 " JS/TS/JSON indent settings: match prettier defaults
 autocmd Filetype javascript setlocal tabstop=2 softtabstop=0 expandtab shiftwidth=2 smarttab
 autocmd Filetype typescript setlocal tabstop=2 softtabstop=0 expandtab shiftwidth=2 smarttab
@@ -107,6 +114,7 @@ autocmd BufWritePre *.css,*.html,*.js,*.jsx,*.json,*.md,*.php,*.py,*.sh,*.ts,*.t
 """"""""""""""""""""""""""""""
 " Syntastic: the syntax helper
 """"""""""""""""""""""""""""""
+
 let g:syntastic_mode_map = { 'mode': 'active',
 			\ 'active_filetypes': ['html', 'javascript', 'nix', 'php', 'python', 'sh', 'sql', 'typescript' ],
 			\ 'passive_filetypes': [] }
@@ -169,3 +177,83 @@ let g:ctrlp_custom_ignore = {
 			\ 'link': 'some_bad_symbolic_links',
 			\ }
 let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files -co --exclude-standard']
+
+" We want to be able to rename variables, but YCM only works for
+" the filetypes ['java', 'javascript', 'typescript', 'rust']. 
+"
+" LanguageClient-neovim works for Python.
+" https://github.com/autozimu/LanguageClient-neovim
+"
+" The following section is a wrapper to try handling
+" all filetypes with a unified API.
+
+" https://www.reddit.com/r/vim/comments/1a4yf1
+function! CleanNoNameEmptyBuffers()
+  let buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) < 0 && (getbufline(v:val, 1, "$") == [""])')
+  if !empty(buffers)
+    exe 'bd '.join(buffers, ' ')
+  else
+    echo 'No buffer deleted'
+  endif
+endfunction
+
+" Taken from
+" https://github.com/Asheq/close-buffers.vim/blob/master/plugin/close-buffers.vim
+function! s:DeleteBuffers(buffer_numbers, bang)
+  if !empty(a:buffer_numbers)
+    execute s:GetBufferDeleteCommand(a:bang) . ' ' . join(a:buffer_numbers)
+  endif
+endfunction
+
+function! s:GetBufferDeleteCommand(bang)
+  return 'bdelete' . (a:bang ? '!' : '')
+endfunction
+
+function s:getListedOrLoadedBuffers()
+  return filter(getbufinfo(), 'v:val.listed || v:val.loaded')
+endfunction
+
+function! s:CloseNamelessBuffers(bang)
+  let nameless_buffers = map(filter(s:getListedOrLoadedBuffers(), 'v:val.name == ""'), 'v:val.bufnr')
+  call s:DeleteBuffers(nameless_buffers, a:bang)
+endfunction
+
+" Using a kludge to prevent an additional location list /
+" buffer from displaying every time I save.
+" See this issue:
+" https://github.com/autozimu/LanguageClient-neovim/issues/861
+autocmd BufWritePost *.py call s:CloseNamelessBuffers(1)
+
+call LanguageClient#setDiagnosticsList("Quickfix")
+let g:LanguageClient_serverCommands = {
+  \ 'python': ['pyls']
+  \ }
+  "\ 'python': ['PYLS_PATH_REPLACE_ME' . '/pyls']
+
+function! RefactorRenameYcm()
+  call inputsave()
+  let new_name = input('Rename to: ')
+  call inputrestore()
+  execute 'YcmCompleter RefactorRename ' . new_name
+endfunction
+
+function! RefactorRenameOther()
+  let old_name = expand("<cword>")
+  call inputsave()
+  let new_name = input('Rename to: ')
+  call inputrestore()
+  " only replacing when old_name matches the whole word.
+  execute '%s#\<' . old_name . '\>#' . new_name . '#g'
+endfunction
+
+function RefactorRenameGeneric()
+	if has_key(g:LanguageClient_serverCommands, &filetype)
+		nnoremap <buffer> <silent> <leader>r :call LanguageClient#textDocument_rename()<CR>
+	elseif (index(['java', 'javascript', 'typescript', 'rust'], &filetype) > 0)
+		nnoremap <buffer> <silent> <leader>r :call RefactorRenameYcm()<CR>
+	else
+		nnoremap <buffer> <silent> <leader>r :call RefactorRenameOther()<CR>
+	endif
+endfunction
+
+autocmd FileType * call RefactorRenameGeneric()

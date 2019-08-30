@@ -6,7 +6,7 @@ let
   custom = import ../all-custom.nix;
 in common ++ [
 
-  pkgs.nodejs-8_x
+  pkgs.nodejs-10_x
   pkgs.nodePackages.node2nix
 
   # TODO: should this be specified both in here

@@ -4,13 +4,13 @@ let
 #  nodePackages_6_x = callPackage ./development/node-packages/default-v6.nix {
 #    nodejs = pkgs.nodejs-6_x;
 #  };
-  nodePackages_8_x = callPackage ./development/node-packages/default-v8.nix {
-    nodejs = pkgs.nodejs-8_x;
-  };
+#  nodePackages_8_x = callPackage ./development/node-packages/default-v8.nix {
+#    nodejs = pkgs.nodejs-8_x;
+#  };
   nodePackages_10_x = callPackage ./development/node-packages/default-v10.nix {
     nodejs = pkgs.nodejs-10_x;
   };
-  nodePackages = nodePackages_8_x;
+  nodePackages = nodePackages_10_x;
 in
 {
   nodePackages = nodePackages;
