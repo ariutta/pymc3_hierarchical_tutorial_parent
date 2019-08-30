@@ -1,6 +1,6 @@
 # pymc3_hierarchical_tutorial_parent
 
-Container for `https://github.com/ariutta/pymc3_hierarchical_tutorial`.
+Container for [pymc3_hierarchical_tutorial](https://github.com/ariutta/pymc3_hierarchical_tutorial).
 
 ## Install
 
