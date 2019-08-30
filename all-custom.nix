@@ -7,12 +7,14 @@ let
 #  nodePackages_8_x = callPackage ./development/node-packages/default-v8.nix {
 #    nodejs = pkgs.nodejs-8_x;
 #  };
+  python3Packages = import ./development/python-modules/python-packages.nix;
   nodePackages_10_x = callPackage ./development/node-packages/default-v10.nix {
     nodejs = pkgs.nodejs-10_x;
   };
   nodePackages = nodePackages_10_x;
 in
 {
+  python3Packages = python3Packages;
   nodePackages = nodePackages;
   depcheck = nodePackages.depcheck;
   gpml2pvjson = nodePackages.gpml2pvjson;

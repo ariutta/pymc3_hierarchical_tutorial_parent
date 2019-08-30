@@ -5,11 +5,10 @@ let
   common = import ./common.nix;
   custom = import ../all-custom.nix;
 in common ++ [
-
   pkgs.python3
   pkgs.pypi2nix
-  custom.black
 
+  custom.black
 ] ++ (if stdenv.isDarwin then [
 
   # XCode Command Line Tools
