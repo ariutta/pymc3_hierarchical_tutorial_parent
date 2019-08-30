@@ -1,0 +1,5 @@
+{
+  "require": {
+    "mediawiki/mediawiki-codesniffer": "*"
+  }
+}
