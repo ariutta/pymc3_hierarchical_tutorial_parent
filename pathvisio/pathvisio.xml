@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:pvRepository xmlns:ns2="http://www.pathvisio.org">
+    <bundle_version_list>
+        <pv_bundle_version>
+            <authors>
+                <affiliation>
+                    <name>Department of Bioinformatics, Maastricht University</name>
+                    <website>http://www.bigcat.unimaas.nl</website>
+                </affiliation>
+                <developer>
+                    <firstName>Martijn</firstName>
+                    <lastName>van Iersel</lastName>
+                </developer>
+            </authors>
+            <bundle>
+                <categories>
+                    <name>utility</name>
+                </categories>
+                <description>The BridgeDb configuration plugin let's you configure identifier mapping resources to be used in PathVisio. The mapping resources will be used to link pathway identifiers to identifiers in your dataset, during data import and visualization. The mapping resources are also used to fetch information for the backpage side-panel.</description>
+                <faq></faq>
+                <name>BridgeDbConfig Plugin</name>
+                <shortDescription>The BridgeDb configuration plugin let's you configure identifier mapping resources to be used in PathVisio.</shortDescription>
+                <source>http://repository.pathvisio.org</source>
+                <symbolicName>pvplugins-bridgedbSettings</symbolicName>
+                <type>plugin</type>
+                <website>http://developers.pathvisio.org/wiki/BridgeDbConfigPluginHelp</website>
+            </bundle>
+            <icon_url>http://repository.pathvisio.org/plugins/pvplugins-bridgedbSettings/plugin.png</icon_url>
+            <jar_file_url>HOME_REPLACE_ME/.PathVisio/.bundles/pvplugins-bridgedbSettings-1.0.0.jar</jar_file_url>
+            <license>http://www.apache.org/licenses/LICENSE-2.0</license>
+            <release_date>2013-03-25</release_date>
+            <release_notes></release_notes>
+            <version>1.0.0</version>
+        </pv_bundle_version>
+    </bundle_version_list>
+    <url>HOME_REPLACE_ME/.PathVisio/.bundles</url>
+</ns2:pvRepository>
