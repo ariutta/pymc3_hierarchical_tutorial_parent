@@ -24,7 +24,7 @@ exe 'set rtp+=' . expand("CUSTOM_PATH_REPLACE_ME")
 "let $PATH = "CUSTOM_PATH_REPLACE_ME" . ':' . $PATH
 
 " this makes pyls and its plugins work:
-let $PATH = "CUSTOM_PATH_REPLACE_ME" . ':' . $PATH
+let $PATH = $PATH . ':' . "CUSTOM_PATH_REPLACE_ME"
 
 " Powerline:
 " add bindings to Vim's runtimepath:
@@ -114,6 +114,7 @@ autocmd BufWritePre *.css,*.html,*.js,*.jsx,*.json,*.md,*.php,*.py,*.sh,*.ts,*.t
 """"""""""""""""""""""""""""""
 " Syntastic: the syntax helper
 """"""""""""""""""""""""""""""
+
 let g:syntastic_mode_map = { 'mode': 'active',
 			\ 'active_filetypes': ['html', 'javascript', 'nix', 'php', 'python', 'sh', 'sql', 'typescript' ],
 			\ 'passive_filetypes': [] }
