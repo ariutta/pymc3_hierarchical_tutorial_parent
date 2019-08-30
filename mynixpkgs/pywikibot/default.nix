@@ -25,13 +25,13 @@ buildPythonPackage rec {
     ln -s $out/lib/python3.7/site-packages/pywikibot $out/shared/scripts/pywikibot
   '';
 
-  postFixup = ''
-    echo ""
-    echo 'Before using, you'll need to configure Pywikibot:'
-    echo '    pwb.py generate_user_files'
-    echo 'More help: https://www.mediawiki.org/wiki/Manual:Pywikibot/Installation#Configure_Pywikibot'
-    echo ""
-  '';
+#  postFixup = ''
+#    echo ""
+#    echo 'Before using, you'll need to configure Pywikibot:'
+#    echo '    pwb.py generate_user_files'
+#    echo 'More help: https://www.mediawiki.org/wiki/Manual:Pywikibot/Installation#Configure_Pywikibot'
+#    echo ""
+#  '';
 
   doCheck = false;
   buildInputs = [  ];
