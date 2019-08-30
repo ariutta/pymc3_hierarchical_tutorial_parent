@@ -25,6 +25,12 @@ in [
   pkgs.python3Packages.flake8
   #pkgs.python3Packages.pylint
 
+  pkgs.python3Packages.python-language-server
+  pkgs.python3Packages.pyls-isort
+  pkgs.python3Packages.pyls-mypy
+  pkgs.python3Packages.rope
+  pkgs.python3Packages.pyflakes
+
   # sqlparse is on the command line as sqlformat.
   # It fails for some standard sql expressions (maybe CREATE TABLE?).
   pkgs.python3Packages.sqlparse
@@ -34,7 +40,7 @@ in [
   #####################################
   # Deps for Syntastic (Syntax Checker)
   #####################################
-  custom.mediawiki-codesniffer
+  #custom.mediawiki-codesniffer
   # TODO phpcs is installed by mediawiki-codesniffer. Should we still use the following line?
   #pkgs.php72Packages.phpcs
 
