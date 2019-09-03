@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-OUTPUT_FILE="abcedf.txt"
+OUTPUT_FILE=$(mktemp) || exit 1
 
 pid1=""
 pid2=""
@@ -12,8 +12,6 @@ cleanup() {
   fi
   kill -9 "$pid1"
   kill -9 "$pid2"
-  #ssh nixos.gladstone.internal -tt 'cd ~/Documents/pymc3_hierarchical_tutorial_parent; nix-shell; jupyter notebook stop'
-  #for mypid in $(ps | grep "ssh.*pymc" | awk '{print $1}'); do kill -9 $mypid; done
 }
 
 # Based on http://linuxcommand.org/lc3_wss0140.php
@@ -44,7 +42,14 @@ error_exit() {
 trap error_exit ERR
 trap cleanup EXIT INT QUIT TERM
 
-nohup ssh nixos.gladstone.internal -tt 'cd ~/Documents/pymc3_hierarchical_tutorial_parent; nix-shell' > "$OUTPUT_FILE" &
+# NOTE: TARGET_DIR cannot start with "~", but it can be relative to remote $HOME.
+TARGET_DIR=$1
+
+if [[ -z "$TARGET_DIR" ]]; then
+  error_exit "Target directory required: jupyter-launch-remote <target_dir>, e.g., jupyter-launch-remote code/tool-wikipathways2wiki"
+fi
+
+nohup ssh nixos.gladstone.internal -tt "cd $TARGET_DIR && nix-shell shell-jupyter-launch.nix || exit 1" > "$OUTPUT_FILE" &
 pid1=$!
 sleep 3
 
@@ -52,9 +57,33 @@ nohup ssh -N -L 8888:localhost:8888 nixos.gladstone.internal > /dev/null &
 pid2=$!
 sleep 3
 
-open "$(grep '^\s*http' $OUTPUT_FILE | head -n 1 | sed 's/^ *http/http/')"
+url="$(grep '^\s*http' $OUTPUT_FILE | head -n 1 | sed 's/^ *http/http/')"
+if [[ -z "$url" ]]; then
+  echo 'Waiting for jupyter notebook to launch (1/3)...'
+  sleep 3
+fi
+
+url="$(grep '^\s*http' $OUTPUT_FILE | head -n 1 | sed 's/^ *http/http/')"
+if [[ -z "$url" ]]; then
+  echo 'Waiting for jupyter notebook to launch (2/3)...'
+  sleep 3
+fi
+
+url="$(grep '^\s*http' $OUTPUT_FILE | head -n 1 | sed 's/^ *http/http/')"
+if [[ -z "$url" ]]; then
+  echo 'Waiting for jupyter notebook to launch (3/3)...'
+  sleep 3
+fi
+
+url="$(grep '^\s*http' $OUTPUT_FILE | head -n 1 | sed 's/^ *http/http/')"
+if [[ -z "$url" ]]; then
+  error_exit "No notebook URL found"
+fi
+
+open "$url"
+
 if [[ -f "$OUTPUT_FILE" ]]; then
   rm "$OUTPUT_FILE"
 fi
 
-read -rp "Press enter to quit"
+read -rp "To quit, hit Enter"
