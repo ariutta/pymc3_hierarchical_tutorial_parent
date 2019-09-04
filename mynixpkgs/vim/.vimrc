@@ -111,51 +111,139 @@ autocmd Filetype json setlocal tabstop=2 softtabstop=0 expandtab shiftwidth=2 sm
 " Autoformat on save for filetypes specified:
 autocmd BufWritePre *.css,*.html,*.js,*.jsx,*.json,*.md,*.php,*.py,*.sh,*.ts,*.tsx,*.xml Neoformat
 
-""""""""""""""""""""""""""""""
-" Syntastic: the syntax helper
-""""""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""""
+" ALE: check syntax and fix code
+"""""""""""""""""""""""""""""""
 
-let g:syntastic_mode_map = { 'mode': 'active',
-			\ 'active_filetypes': ['html', 'javascript', 'nix', 'php', 'python', 'sh', 'sql', 'typescript' ],
-			\ 'passive_filetypes': [] }
-" Always stick any detected errors into the loclist:
-let g:syntastic_always_populate_loc_list=1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-" Make tsuquyomi output display in syntastic gutter (disabled now bc it freezes vim for minutes)
-"let g:tsuquyomi_disable_quickfix = 1
+" ctrl-k for previous error
+" ctrl-j for next error
+nmap <silent> <C-k> <Plug>(ale_previous_wrap)
+nmap <silent> <C-j> <Plug>(ale_next_wrap)
 
-let g:syntastic_html_checkers = ['eslint']
+" Do not lint or fix minified files.
+let g:ale_pattern_options = {
+\ '\.min\.js$': {'ale_linters': [], 'ale_fixers': []},
+\ '\.min\.css$': {'ale_linters': [], 'ale_fixers': []},
+\ '\.py$': {'ale_linters': ['flake8', 'pyls'], 'ale_fixers': ['isort', 'black']},
+\}
 
-let g:syntastic_javascript_checkers = ['eslint']
-" strangely, when g:tsuquyomi_disable_quickfix is set to 1, I needed
-" to add tsuquyomi as below to make the errors show in the gutter
-"let g:syntastic_javascript_checkers = ['eslint', 'tsuquyomi']
+"\ '\.py$': {'ale_linters': ['flake8', 'pylint', 'pyls'], 'ale_fixers': ['isort', 'black']},
+"\ '\.py$': {'ale_linters': ['flake8', 'pylint', 'pyls'], 'ale_fixers': ['isort', 'yapf', 'black']},
 
-let g:syntastic_nix_checkers = ['nix']
+"" Python Language Server (pyls)
+"" https://github.com/palantir/python-language-server
+"" handles the following automatically:
+""rope
+""pyflakes
+""mccabe
+""pycodestyle
+""pydocstyle
+""autopep8
+""YAPF
+"" and the following w/ plugins installed:
+""pyls-mypy
+""pyls-isort
+""pyls-black
+"" It does not handle the following:
+""flake8
+""pylint
 
-let g:syntastic_php_checkers = ['phpcs']
-" Tell phpcs to use the Mediawiki standard:
-" TODO replace the nix-env call with a variable calculated at build
-let g:syntastic_php_phpcs_args = "--standard=$(nix-env -q --out-path --no-name 'composer-mediawiki-mediawiki-codesniffer')/share/php/composer-mediawiki-mediawiki-codesniffer/vendor/mediawiki/mediawiki-codesniffer/MediaWiki/ruleset.xml"
+"Available Linters: ['bandit', 'flake8', 'mypy', 'prospector', 'pycodestyle', 'pydocstyle', 'pyflakes', 'pylama', 'pylint', 'pyls', 'pyre', 'vulture']
+"  Enabled Linters: ['flake8', 'mypy', 'pylint']
+" Suggested Fixers:
+"  'add_blank_lines_for_python_control_statements' - Add blank lines before control statements.
+"  'autopep8' - Fix PEP8 issues with autopep8.
+"  'black' - Fix PEP8 issues with black.
+"  'isort' - Sort Python imports with isort.
+"  'remove_trailing_lines' - Remove all blank lines at the end of a file.
+"  'reorder-python-imports' - Sort Python imports with reorder-python-imports.
+"  'trim_whitespace' - Remove all trailing whitespace characters at the end of every line.
+"  'yapf' - Fix Python files with yapf.
 
-let g:syntastic_python_checkers = ['flake8', 'pylint']
-" Black's default line length is 88 chars, but it will
+" E501: Black's default line length is 88 chars, but it will
 " sometimes make long lines, e.g.: 119 chars
 " https://github.com/python/black#line-length
-let g:syntastic_python_flake8_args="--ignore=E501"
-" If Black always limited to 88, the following might work:
-"let g:syntastic_python_flake8_args="--max-line-length=88"
-"let g:syntastic_python_pylint_post_args="--max-line-length=88"
+" W503: black doesn't follow this.
+let g:ale_python_flake8_options="--ignore=E501,W503"
+"let g:ale_python_pycodestyle_options="--max-line-length=120"
+"let g:ale_python_pycodestyle_options="--ignore=E501,W503"
+"let g:ale_python_pyls_options="--ignore=E501,W503"
+"let g:ale_python_pyls_use_global = 1
 
-let g:syntastic_sh_checkers = ['shellcheck']
-" make syntastic call shellcheck with param to follow files
-let g:syntastic_sh_shellcheck_args = "-x"
+" Call shellcheck with param to follow files
+let g:ale_sh_shellcheck_options = "-x"
 
-let g:syntastic_sql_checkers = ['sqlint']
-" TODO: getting an error when this is enabled
-"let g:syntastic_typescript_checkers = ['tsuquyomi']
+"""""""""""""""""""""""""""""""
+"" Syntastic: the syntax helper
+"""""""""""""""""""""""""""""""
+"
+"let g:syntastic_mode_map = { 'mode': 'active',
+"			\ 'active_filetypes': ['html', 'javascript', 'nix', 'php', 'python', 'sh', 'sql', 'typescript' ],
+"			\ 'passive_filetypes': [] }
+"" Always stick any detected errors into the loclist:
+"let g:syntastic_always_populate_loc_list=1
+"let g:syntastic_auto_loc_list = 0
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
+"
+"
+"" Make tsuquyomi output display in syntastic gutter (disabled now bc it freezes vim for minutes)
+""let g:tsuquyomi_disable_quickfix = 1
+"
+"let g:syntastic_html_checkers = ['eslint']
+"
+"let g:syntastic_javascript_checkers = ['eslint']
+"" strangely, when g:tsuquyomi_disable_quickfix is set to 1, I needed
+"" to add tsuquyomi as below to make the errors show in the gutter
+""let g:syntastic_javascript_checkers = ['eslint', 'tsuquyomi']
+"
+"let g:syntastic_nix_checkers = ['nix']
+"
+"let g:syntastic_php_checkers = ['phpcs']
+"" Tell phpcs to use the Mediawiki standard:
+"" TODO replace the nix-env call with a variable calculated at build
+"let g:syntastic_php_phpcs_args = "--standard=$(nix-env -q --out-path --no-name 'composer-mediawiki-mediawiki-codesniffer')/share/php/composer-mediawiki-mediawiki-codesniffer/vendor/mediawiki/mediawiki-codesniffer/MediaWiki/ruleset.xml"
+"
+"" Python Language Server <https://github.com/palantir/python-language-server>
+"" handles the following automatically:
+""rope
+""pyflakes
+""mccabe
+""pycodestyle
+""pydocstyle
+""autopep8
+""YAPF
+"" and the following w/ plugins installed:
+""pyls-mypy
+""pyls-isort
+""pyls-black
+"" It does not handle the following:
+""flake8
+""pylint
+""
+"" TODO: it appears pyls feeds at least mypy into Syntastic,
+"" even without it being specified as a checker.
+"" Do we need to specify any python checkers?
+"
+"""let g:syntastic_python_checkers = ['flake8', 'pylint', 'pycodestyle', 'pydocstyle', 'mccabe', 'pyflakes']
+"let g:syntastic_python_checkers = ['flake8', 'mypy']
+""let g:syntastic_python_checkers = ['flake8', 'pylint']
+""" E501: Black's default line length is 88 chars, but it will
+""" sometimes make long lines, e.g.: 119 chars
+""" https://github.com/python/black#line-length
+""" W503: black doesn't follow this.
+"let g:syntastic_python_flake8_args="--ignore=E501,W503"
+""" If Black always limited to 88, the following might work:
+"""let g:syntastic_python_flake8_args="--max-line-length=88"
+"""let g:syntastic_python_pylint_post_args="--max-line-length=88"
+"
+"let g:syntastic_sh_checkers = ['shellcheck']
+"" make syntastic call shellcheck with param to follow files
+"let g:syntastic_sh_shellcheck_args = "-x"
+"
+"let g:syntastic_sql_checkers = ['sqlint']
+"" TODO: getting an error when this is enabled
+""let g:syntastic_typescript_checkers = ['tsuquyomi']
 
 """""""""""""""""""""""""
 " CtrlP: better searching
@@ -178,82 +266,48 @@ let g:ctrlp_custom_ignore = {
 			\ }
 let g:ctrlp_user_command = ['.git', 'cd %s && git ls-files -co --exclude-standard']
 
-" We want to be able to rename variables, but YCM only works for
-" the filetypes ['java', 'javascript', 'typescript', 'rust']. 
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"" Refactor
+""
+"" We want to be able to rename variables, but YCM only works for
+"" the filetypes ['java', 'javascript', 'typescript', 'rust']. 
+""
+"" LanguageClient-neovim works for Python.
+"" https://github.com/autozimu/LanguageClient-neovim
+""
+"" The following section is a wrapper to try handling
+"" all filetypes with a unified API.
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"call LanguageClient#setDiagnosticsList("Quickfix")
+"let g:LanguageClient_serverCommands = {
+"  \ 'python': ['pyls']
+"  \ }
+"  "\ 'python': ['PYLS_PATH_REPLACE_ME' . '/pyls']
 "
-" LanguageClient-neovim works for Python.
-" https://github.com/autozimu/LanguageClient-neovim
+"function! RefactorRenameYcm()
+"  call inputsave()
+"  let new_name = input('Rename to: ')
+"  call inputrestore()
+"  execute 'YcmCompleter RefactorRename ' . new_name
+"endfunction
 "
-" The following section is a wrapper to try handling
-" all filetypes with a unified API.
-
-" https://www.reddit.com/r/vim/comments/1a4yf1
-function! CleanNoNameEmptyBuffers()
-  let buffers = filter(range(1, bufnr('$')), 'buflisted(v:val) && empty(bufname(v:val)) && bufwinnr(v:val) < 0 && (getbufline(v:val, 1, "$") == [""])')
-  if !empty(buffers)
-    exe 'bd '.join(buffers, ' ')
-  else
-    echo 'No buffer deleted'
-  endif
-endfunction
-
-" Taken from
-" https://github.com/Asheq/close-buffers.vim/blob/master/plugin/close-buffers.vim
-function! s:DeleteBuffers(buffer_numbers, bang)
-  if !empty(a:buffer_numbers)
-    execute s:GetBufferDeleteCommand(a:bang) . ' ' . join(a:buffer_numbers)
-  endif
-endfunction
-
-function! s:GetBufferDeleteCommand(bang)
-  return 'bdelete' . (a:bang ? '!' : '')
-endfunction
-
-function s:getListedOrLoadedBuffers()
-  return filter(getbufinfo(), 'v:val.listed || v:val.loaded')
-endfunction
-
-function! s:CloseNamelessBuffers(bang)
-  let nameless_buffers = map(filter(s:getListedOrLoadedBuffers(), 'v:val.name == ""'), 'v:val.bufnr')
-  call s:DeleteBuffers(nameless_buffers, a:bang)
-endfunction
-
-" Using a kludge to prevent an additional location list /
-" buffer from displaying every time I save.
-" See this issue:
-" https://github.com/autozimu/LanguageClient-neovim/issues/861
-autocmd BufWritePost *.py call s:CloseNamelessBuffers(1)
-
-call LanguageClient#setDiagnosticsList("Quickfix")
-let g:LanguageClient_serverCommands = {
-  \ 'python': ['pyls']
-  \ }
-  "\ 'python': ['PYLS_PATH_REPLACE_ME' . '/pyls']
-
-function! RefactorRenameYcm()
-  call inputsave()
-  let new_name = input('Rename to: ')
-  call inputrestore()
-  execute 'YcmCompleter RefactorRename ' . new_name
-endfunction
-
-function! RefactorRenameOther()
-  let old_name = expand("<cword>")
-  call inputsave()
-  let new_name = input('Rename to: ')
-  call inputrestore()
-  " only replacing when old_name matches the whole word.
-  execute '%s#\<' . old_name . '\>#' . new_name . '#g'
-endfunction
-
-function RefactorRenameGeneric()
-	if has_key(g:LanguageClient_serverCommands, &filetype)
-		nnoremap <buffer> <silent> <leader>r :call LanguageClient#textDocument_rename()<CR>
-	elseif (index(['java', 'javascript', 'typescript', 'rust'], &filetype) > 0)
-		nnoremap <buffer> <silent> <leader>r :call RefactorRenameYcm()<CR>
-	else
-		nnoremap <buffer> <silent> <leader>r :call RefactorRenameOther()<CR>
-	endif
-endfunction
-
-autocmd FileType * call RefactorRenameGeneric()
+"function! RefactorRenameOther()
+"  let old_name = expand("<cword>")
+"  call inputsave()
+"  let new_name = input('Rename to: ')
+"  call inputrestore()
+"  " only replacing when old_name matches the whole word.
+"  execute '%s#\<' . old_name . '\>#' . new_name . '#g'
+"endfunction
+"
+"function RefactorRenameGeneric()
+"	if has_key(g:LanguageClient_serverCommands, &filetype)
+"		nnoremap <buffer> <silent> <leader>r :call LanguageClient#textDocument_rename()<CR>
+"	elseif (index(['java', 'javascript', 'typescript', 'rust'], &filetype) > 0)
+"		nnoremap <buffer> <silent> <leader>r :call RefactorRenameYcm()<CR>
+"	else
+"		nnoremap <buffer> <silent> <leader>r :call RefactorRenameOther()<CR>
+"	endif
+"endfunction
+"
+"autocmd FileType * call RefactorRenameGeneric()

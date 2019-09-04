@@ -66,8 +66,9 @@ vim_configured.customize {
         # https://blog.jeaye.com/2018/02/01/gruvbox/
         "gruvbox"
 
-        # make vim syntax-aware
-        "Syntastic"
+        # make vim syntax aware
+        #"Syntastic"
+        "ale"
         # syntax providers (see dependencies in vim_configured.buildInputs)
         # NOTE: it appears necessary to put these here, because when I
         # try putting them in the "JavaScript/TypeScript-only" section,
