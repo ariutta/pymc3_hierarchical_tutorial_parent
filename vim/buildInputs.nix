@@ -8,7 +8,6 @@
 with import <nixpkgs> { config.allowUnfree = true; };
 let
   custom = import ../all-custom.nix;
-  #nixos = import <nixos> { config.allowUnfree = true; };
 in [
   pkgs.python3
   ####################
@@ -22,14 +21,20 @@ in [
   pkgs.nodePackages.typescript
   pkgs.python3Packages.jsbeautifier
   pkgs.php72Packages.php-cs-fixer
-  pkgs.python3Packages.flake8
-  #pkgs.python3Packages.pylint
 
-  pkgs.python3Packages.python-language-server
-  pkgs.python3Packages.pyls-isort
-  pkgs.python3Packages.pyls-mypy
-  pkgs.python3Packages.rope
-  pkgs.python3Packages.pyflakes
+  # Python, Python Language Server & PYLS deps
+  (pkgs.python3.withPackages (p: with p; [
+    python-language-server
+    rope
+    flake8 # this is pyflakes + syntax checking
+    mccabe
+    pycodestyle
+    pydocstyle
+    pylint
+    pyls-isort
+    pyls-mypy
+    custom.black
+  ]))
 
   # sqlparse is on the command line as sqlformat.
   # It fails for some standard sql expressions (maybe CREATE TABLE?).
