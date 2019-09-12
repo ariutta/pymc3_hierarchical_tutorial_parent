@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+
+OUTPUT_FILE=$(mktemp) || exit 1
+SERVER_START_SCRIPT="./start-server.sh"
+SERVER_STOP_SCRIPT="./stop-server.sh"
+
+# from https://unix.stackexchange.com/a/9607
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+  SESSION_TYPE=remote/ssh
+else
+  case $(ps -o comm= -p $PPID) in
+  sshd | */sshd) SESSION_TYPE=remote/ssh ;;
+  esac
+fi
+
+server_pid=""
+tunnel_pid=""
+
+cleanup_complete=0
+
+cleanup() {
+  echo 'Cleaning up...'
+
+  if [[ -f "$OUTPUT_FILE" ]]; then
+    rm "$OUTPUT_FILE"
+  fi
+
+  # TODO: what is the best way to stop the server and tunnel?
+
+  if [[ -f "$SERVER_STOP_SCRIPT" ]]; then
+    bash "$SERVER_STOP_SCRIPT"
+  fi
+
+  if [[ -n "$server_pid" ]] && [[ -n "$(ps -p $server_pid | grep $server_pid)" ]]; then
+    kill -9 "$server_pid"
+  fi
+  if [[ -n "$tunnel_pid" ]] && [[ -n "$(ps -p $tunnel_pid | grep $tunnel_pid)" ]]; then
+    kill -9 "$tunnel_pid"
+  fi
+
+  cleanup_complete=1
+}
+
+# Based on http://linuxcommand.org/lc3_wss0140.php
+# and https://codeinthehole.com/tips/bash-error-reporting/
+PROGNAME=$(basename "$0")
+error_exit() {
+#	----------------------------------------------------------------
+#	Function for exit due to fatal program error
+#		Accepts 1 argument:
+#			string containing descriptive error message
+#	----------------------------------------------------------------
+
+  read -r line file <<<"$(caller)"
+  echo "" 1>&2
+  echo "ERROR: file $file, line $line" 1>&2
+  if [ ! "$1" ]; then
+    sed "${line}q;d" "$file" 1>&2
+  else
+    echo "${1:-"Unknown Error"}" 1>&2
+  fi
+  echo "" 1>&2
+
+  # TODO: should error_exit call cleanup?
+  #       The EXIT trap already calls cleanup, so
+  #       calling it here means calling it twice.
+  if [ ! $cleanup_complete ]; then
+    cleanup
+  fi
+  exit 1
+}
+
+get_server_url() {
+  attempt_iteration=${1:-1}
+  ATTEMPT_LIMIT=5
+  WAIT_SEC=3
+
+  echo "Waiting for server to start (Attempt $attempt_iteration/$ATTEMPT_LIMIT)..." 1>&2
+  sleep $WAIT_SEC
+  cat "$OUTPUT_FILE" 1>&2
+
+  url="$(perl -ne "print if s/(^|.*?[ \"])(http.*?)([\" >].*|$)/\$2/" "$OUTPUT_FILE" | head -n 1)"
+  if [[ -z "$url" ]]; then
+    if [[ $attempt_iteration -eq $ATTEMPT_LIMIT ]]; then
+      error_exit "No server URL found"
+    else
+      next_attempt_iteration=$(echo "$attempt_iteration + 1" | bc)
+      get_server_url $next_attempt_iteration
+    fi
+  else
+    echo $url
+  fi
+}
+
+trap error_exit ERR
+trap cleanup EXIT INT QUIT TERM
+
+# TODO: TARGET_DIR cannot start with "~", but it can be relative to remote $HOME.
+#       Check for this and consider replacing "~" with "".
+TARGET_DIR=$1
+
+if [[ -z "$TARGET_DIR" ]]; then
+  if [[ -f "$SERVER_START_SCRIPT" ]]; then
+    echo "Launching locally..."
+    nohup "$SERVER_START_SCRIPT" > "$OUTPUT_FILE" &
+    server_pid=$!
+  else
+    error_exit "If server is local, file '$SERVER_START_SCRIPT' is missing.
+If server is remote, target directory required:
+    launch <target_dir>
+Example:
+    launch code/tool-wikipathways2wiki"
+  fi
+else
+  SERVER_IS_REMOTE=1
+  nohup ssh nixos.gladstone.internal -tt "cd $TARGET_DIR && nix-shell shell-with-server.nix || exit 1" > "$OUTPUT_FILE" &
+  server_pid=$!
+  sleep 3
+fi
+
+url=$(get_server_url)
+
+port="$(echo "$url" | sed -E 's/.*:([0-9]{4}).*/\1/')"
+if [[ -z "$port" ]]; then
+  error_exit "No port found"
+fi
+
+if [ $SERVER_IS_REMOTE ]; then
+  echo "Starting tunnel..."
+  nohup ssh -N -L $port:localhost:$port nixos.gladstone.internal > /dev/null &
+  tunnel_pid=$!
+  sleep 3
+fi
+
+if [ "$SESSION_TYPE" == "remote/ssh" ]; then
+  echo "Not launching browser in ssh session."
+elif which xdg-open > /dev/null 2>&1; then
+  xdg-open "$url"
+elif which open > /dev/null 2>&1; then
+  open "$url"
+else
+  echo "Warning: Not sure how to open browser."
+  echo "Here's the server output:"
+  cat "$OUTPUT_FILE"
+fi
+
+echo ""
+read -rp "To quit, hit Enter"
